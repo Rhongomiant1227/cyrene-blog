@@ -125,11 +125,15 @@ const bannerOffset =
 let bodyFontFamily = "";
 if (siteConfig.font) {
 	const fonts: string[] = [];
-	if (siteConfig.font.asciiFont?.fontFamily) {
+	if (siteConfig.font.asciiFont?.localFonts?.length) {
+		fonts.push("CyreneAscii");
+	} else if (siteConfig.font.asciiFont?.fontFamily) {
 		const asciiFont = siteConfig.font.asciiFont.fontFamily;
 		fonts.push(asciiFont.includes(" ") ? `"${asciiFont}"` : asciiFont);
 	}
-	if (siteConfig.font.cjkFont?.fontFamily) {
+	if (siteConfig.font.cjkFont?.localFonts?.length) {
+		fonts.push("CyreneCjk");
+	} else if (siteConfig.font.cjkFont?.fontFamily) {
 		const cjkFont = siteConfig.font.cjkFont.fontFamily;
 		fonts.push(cjkFont.includes(" ") ? `"${cjkFont}"` : cjkFont);
 	}
@@ -179,6 +183,8 @@ if (siteConfig.font) {
 				"page-width": `${PAGE_WIDTH}rem`,
 			}}
 		></style>
+
+		<link rel="stylesheet" href={url("/assets/cyrene-fonts.css")} />
 
 		{
 			pioConfig.enable && (
