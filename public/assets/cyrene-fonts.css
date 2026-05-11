@@ -1,6 +1,8 @@
 @font-face {
   font-family: "CyreneAscii";
-  src: url("./font/ZenMaruGothic-Medium.ttf") format("truetype");
+  src:
+    url("./font/ZenMaruGothic-Medium.woff2") format("woff2"),
+    url("./font/ZenMaruGothic-Medium.ttf") format("truetype");
   font-style: normal;
   font-weight: 400;
   font-display: swap;
@@ -8,7 +10,9 @@
 
 @font-face {
   font-family: "CyreneCjk";
-  src: url("./font/loli.ttf") format("truetype");
+  src:
+    url("./font/loli.woff2") format("woff2"),
+    url("./font/loli.ttf") format("truetype");
   font-style: normal;
   font-weight: 500;
   font-display: swap;
