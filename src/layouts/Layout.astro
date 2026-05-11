@@ -1,0 +1,318 @@
+---
+import ConfigCarrier from "@components/misc/ConfigCarrier.astro";
+import { PageProgressBar } from "@components/control/PageProgressBar";
+import Pio from "@components/features/pio/Pio.svelte";
+import MusicPlayer from "@components/widgets/music-player/MusicPlayer.svelte";
+import {
+	musicPlayerConfig,
+	pioConfig,
+	profileConfig,
+	siteConfig,
+} from "@/config";
+
+import { PAGE_WIDTH } from "../constants/constants";
+import "../styles/main.css";
+import "../styles/mobile-navbar.css";
+import "../styles/wallpaper-navbar-transparent.css";
+import "../styles/fancybox-custom.css";
+import "../styles/expressive-code.css";
+import "../styles/panel-animations.css";
+import { pathsEqual, url } from "../utils/url-utils";
+import AnalyticsScripts from "./partials/AnalyticsScripts.astro";
+import HeadTags from "./partials/HeadTags.astro";
+
+const BANNER_HEIGHT = 35;
+const BANNER_HEIGHT_EXTEND = 30;
+const BANNER_HEIGHT_HOME = BANNER_HEIGHT + BANNER_HEIGHT_EXTEND;
+
+interface Props {
+	title?: string;
+	banner?: string;
+	description?: string;
+	lang?: string;
+	setOGTypeArticle?: boolean;
+	postSlug?: string;
+	coverImage?: string;
+}
+
+let {
+	title,
+	banner,
+	description,
+	lang,
+	setOGTypeArticle,
+	postSlug,
+	coverImage,
+} = Astro.props;
+
+const isHomePage = pathsEqual(Astro.url.pathname, url("/"));
+const configHue = siteConfig.themeColor.hue;
+const navbarTransparentMode =
+	siteConfig.banner?.navbar?.transparentMode || "semi";
+const shouldShowTopHighlight =
+	navbarTransparentMode === "full" || navbarTransparentMode === "semifull";
+
+const getDefaultBanner = (): string => {
+	const src = siteConfig.banner.src;
+	if (typeof src === "string") {
+		return src;
+	}
+	if (Array.isArray(src)) {
+		return src[0] || "";
+	}
+	if (src && typeof src === "object") {
+		const desktopSrc = src.desktop;
+		const mobileSrc = src.mobile;
+		if (typeof desktopSrc === "string") {
+			return desktopSrc;
+		}
+		if (Array.isArray(desktopSrc) && desktopSrc.length > 0) {
+			return desktopSrc[0];
+		}
+		if (typeof mobileSrc === "string") {
+			return mobileSrc;
+		}
+		if (Array.isArray(mobileSrc) && mobileSrc.length > 0) {
+			return mobileSrc[0];
+		}
+	}
+	return "";
+};
+
+if (!banner || typeof banner !== "string" || banner.trim() === "") {
+	banner = getDefaultBanner();
+}
+
+banner = getDefaultBanner();
+
+const enableBanner = !!siteConfig.banner.src;
+
+let pageTitle: string;
+if (title) {
+	pageTitle = `${title} - ${siteConfig.title}`;
+} else {
+	pageTitle = siteConfig.subtitle
+		? `${siteConfig.title} - ${siteConfig.subtitle}`
+		: siteConfig.title;
+}
+
+let ogImageUrl: string | undefined;
+if (siteConfig.generateOgImages && postSlug) {
+	ogImageUrl = new URL(url(`/og/${postSlug}.png`), Astro.site).toString();
+} else if (coverImage) {
+	ogImageUrl = coverImage.startsWith("http")
+		? coverImage
+		: new URL(url(coverImage), Astro.site).toString();
+} else if (banner) {
+	ogImageUrl = banner.startsWith("http")
+		? banner
+		: new URL(url(banner), Astro.site).toString();
+}
+
+if (!lang) {
+	lang = `${siteConfig.lang}`;
+}
+const siteLang = lang.replace("_", "-");
+
+const bannerOffsetByPosition = {
+	top: `${BANNER_HEIGHT_EXTEND}vh`,
+	center: `${BANNER_HEIGHT_EXTEND / 2}vh`,
+	bottom: "0",
+};
+const bannerOffset =
+	bannerOffsetByPosition[siteConfig.banner.position || "center"];
+
+let bodyFontFamily = "";
+if (siteConfig.font) {
+	const fonts: string[] = [];
+	if (siteConfig.font.asciiFont?.fontFamily) {
+		const asciiFont = siteConfig.font.asciiFont.fontFamily;
+		fonts.push(asciiFont.includes(" ") ? `"${asciiFont}"` : asciiFont);
+	}
+	if (siteConfig.font.cjkFont?.fontFamily) {
+		const cjkFont = siteConfig.font.cjkFont.fontFamily;
+		fonts.push(cjkFont.includes(" ") ? `"${cjkFont}"` : cjkFont);
+	}
+	fonts.push(
+		"system-ui",
+		"-apple-system",
+		"BlinkMacSystemFont",
+		"'Segoe UI'",
+		"Roboto",
+		"Oxygen",
+		"Ubuntu",
+		"Cantarell",
+		"'Open Sans'",
+		"'Helvetica Neue'",
+		"sans-serif",
+	);
+	bodyFontFamily = fonts.join(", ");
+}
+---
+
+<!doctype html>
+<html
+	lang={siteLang}
+	class="bg-[var(--page-bg)] text-[14px] md:text-[16px]"
+	data-overlayscrollbars-initialize
+>
+	<head>
+		<meta charset="UTF-8" />
+
+		<AnalyticsScripts
+			thirdPartyAnalytics={siteConfig.thirdPartyAnalytics}
+		/>
+
+		<HeadTags
+			title={pageTitle}
+			description={description}
+			ogImageUrl={ogImageUrl}
+			setOGTypeArticle={setOGTypeArticle}
+			configHue={configHue}
+		/>
+
+		<slot name="head" />
+
+		<style
+			define:vars={{
+				configHue,
+				"page-width": `${PAGE_WIDTH}rem`,
+			}}
+		></style>
+
+		{
+			pioConfig.enable && (
+				<Fragment
+					set:html={`<link rel="stylesheet" href="${url("/pio/static/pio.css")}" media="print" onload="this.media='all'" />`}
+				/>
+			)
+		}
+
+		<link
+			rel="alternate"
+			type="application/rss+xml"
+			title={profileConfig.name}
+			href={new URL(url("/rss.xml"), Astro.site).toString()}
+		/>
+	</head>
+	<body
+		class="min-h-screen"
+		class:list={[
+			{
+				"lg:is-home": isHomePage,
+				"enable-banner": enableBanner,
+				"cyrene-theme": true,
+			},
+		]}
+		style={bodyFontFamily ? `font-family: ${bodyFontFamily};` : ""}
+		data-overlayscrollbars-initialize
+	>
+		<noscript
+			><iframe
+				src="https://www.googletagmanager.com/ns.html?id=GTM-KRX3XGVH"
+				height="0"
+				width="0"
+				style="display:none;visibility:hidden"></iframe
+		></noscript>
+
+		{shouldShowTopHighlight && <div class="top-gradient-highlight" />}
+
+		<ConfigCarrier />
+		<PageProgressBar
+			enable={siteConfig.pageProgressBar?.enable ?? false}
+			height={siteConfig.pageProgressBar?.height ?? 3}
+			duration={siteConfig.pageProgressBar?.duration ?? 8000}
+		/>
+		<slot />
+
+		{musicPlayerConfig.enable && <MusicPlayer client:idle />}
+		{pioConfig.enable && <Pio client:visible />}
+
+		<div id="page-height-extend" class="hidden h-[300vh]"></div>
+	</body>
+</html>
+
+<style
+	is:global
+	define:vars={{
+		bannerOffset,
+		"banner-height-home": `${BANNER_HEIGHT_HOME}vh`,
+		"banner-height": `${BANNER_HEIGHT}vh`,
+	}}
+>
+	@reference "../styles/main.css";
+
+	@layer components {
+		@media (min-width: 1280px) {
+			.enable-banner.lg\:is-home #banner-wrapper {
+				height: var(--banner-height-home);
+				transform: translateY(var(--banner-height-extend));
+			}
+			.enable-banner #banner-wrapper {
+				height: var(--banner-height-home);
+			}
+
+			.enable-banner.lg\:is-home #banner {
+				height: var(--banner-height-home);
+				transform: translateY(0);
+			}
+			.enable-banner #banner {
+				height: var(--banner-height-home);
+				transform: translateY(var(--bannerOffset));
+			}
+			.enable-banner.lg\:is-home #main-grid {
+				transform: translateY(var(--banner-height-extend));
+			}
+			.enable-banner #top-row {
+				height: calc(var(--banner-height-home) - 4.5rem);
+				@apply transition-all duration-300;
+			}
+		}
+
+		.waves > .parallax use {
+			animation: wave 25s cubic-bezier(0.5, 0.5, 0.45, 0.5) infinite;
+			transform: translateZ(0);
+			will-change: transform;
+			backface-visibility: hidden;
+		}
+		@keyframes wave {
+			0% {
+				transform: translate3d(-90px, 0, 0);
+			}
+			100% {
+				transform: translate3d(85px, 0, 0);
+			}
+		}
+	}
+
+	@layer utilities {
+		@media (min-width: 1280px) {
+			.enable-banner.lg\:is-home #sidebar-sticky {
+				top: calc(1rem - var(--banner-height-extend)) !important;
+			}
+			.enable-banner.lg\:is-home #left-sidebar-sticky {
+				top: calc(1rem - var(--banner-height-extend)) !important;
+			}
+			.enable-banner.lg\:is-home #right-sidebar-sticky {
+				top: calc(1rem - var(--banner-height-extend)) !important;
+			}
+		}
+		.navbar-hidden {
+			@apply opacity-0 -translate-y-16;
+		}
+	}
+</style>
+
+<script>
+	import { initSwupManager } from "../scripts/swup-manager";
+
+	initSwupManager();
+</script>
+
+<script>
+	import "../scripts/code-collapse.js";
+</script>
+
+<script>
+	import "../scripts/theme-optimizer.js";
+</script>

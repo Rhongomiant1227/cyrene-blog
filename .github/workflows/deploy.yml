@@ -1,0 +1,51 @@
+﻿name: Deploy to Pages Branch
+
+on:
+  # 姣忔鎺ㄩ€佸埌 `main` 鍒嗘敮鏃惰Е鍙戣繖涓?宸ヤ綔娴佺▼"
+  # 濡傛灉浣犱娇鐢ㄤ簡鍒殑鍒嗘敮鍚嶏紝璇锋寜闇€灏?`main` 鏇挎崲鎴愪綘鐨勫垎鏀悕
+  push:
+    branches: [ main ]
+  # 鍏佽浣犲湪 GitHub 涓婄殑 Actions 鏍囩涓墜鍔ㄨЕ鍙戞"宸ヤ綔娴佺▼"
+  workflow_dispatch:
+
+# 闇€瑕佸啓鍏ユ潈闄愭潵鎺ㄩ€佸埌pages鍒嗘敮
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout your repository using git
+        uses: actions/checkout@v4
+        with:
+          submodules: true  # 鏀寔 Git Submodule 妯″紡
+          token: ${{ secrets.GITHUB_TOKEN }}  # 鑷姩璁块棶鍚岃处鍙蜂笅鐨勭鏈変粨搴?      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+          
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      
+      - name: Build site
+        run: pnpm run build
+        env:
+          PUBLIC_BASE_PATH: /cyrene-blog/
+          PUBLIC_SITE_URL: https://rhongomiant1227.github.io/cyrene-blog/
+          # 濡傛灉闇€瑕佸惎鐢ㄥ唴瀹瑰垎绂?鍙栨秷浠ヤ笅娉ㄩ噴骞堕厤缃?          # ENABLE_CONTENT_SYNC: true
+          # CONTENT_REPO_URL: ${{ secrets.CONTENT_REPO_URL }}
+          # USE_SUBMODULE: true
+      
+      - name: Deploy to pages branch
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: pages # 閮ㄧ讲鍒皃ages鍒嗘敮
+          folder: dist # Astro榛樿鏋勫缓杈撳嚭鐩綍
+          clean: true # 娓呯悊鐩爣鍒嗘敮涓殑鏃ф枃浠?
