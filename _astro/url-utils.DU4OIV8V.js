@@ -1,0 +1,1 @@
+import"./config.DSIhgwoM.js";import"./zh_TW.BkvVd5vU.js";function c(e,o){const n=e.replace(/^\/|\/$/g,"").toLowerCase(),r=o.replace(/^\/|\/$/g,"").toLowerCase();return n===r}function t(...e){return e.join("/").replace(/\/+/g,"/")}function l(e){return t("","/cyrene-blog/",e)}export{c as p,l as u};
